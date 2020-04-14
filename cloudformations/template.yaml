@@ -37,7 +37,7 @@ Resources:
           Name: AWS::Include
           Parameters:
             Location: ./demo_apigateway_api_1-swagger.yaml
-  
+
   ItemsRestApi2:
     Type: AWS::Serverless::Api
     Properties:
@@ -53,6 +53,7 @@ Resources:
           Name: AWS::Include
           Parameters:
             Location: ./demo_apigateway_api_2-swagger.yaml
+            
   GetItem:
     Type: AWS::Serverless::Function
     Properties:

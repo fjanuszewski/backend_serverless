@@ -1,7 +1,7 @@
 
 # Created by https://www.gitignore.io/api/osx,node,linux,windows
 #SAM
-.aws-sam/
+.aws-sam*
 ### Linux ###
 *~
 
