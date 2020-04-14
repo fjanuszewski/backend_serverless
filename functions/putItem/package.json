@@ -1,0 +1,30 @@
+{
+  "name": "put-template",
+  "version": "1.0.0",
+  "description": "Update HTML Template in Dynamo",
+  "main": "app.js",
+  "license": "MIT",
+  "scripts": {
+    "lint": "node_modules/.bin/eslint *.js --rulesdir=\"./node_modules/eslint/lib/rules\" --color",
+    "lint:fix": "node_modules/.bin/eslint *.js --rulesdir=\"./node_modules/eslint/lib/rules\" --fix --color",
+    "test": "NODE_ENV=test nyc --reporter=lcov --reporter=text mocha --recursive=test/",
+    "coverage": "nyc report --statements 80 --functions 80 --lines 80 --branches 80 --check-coverage --reporter=text-summary --per-file"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.482.0",
+    "aws-sdk-mock": "^4.4.0",
+    "axios-mock-adapter": "^1.16.0",
+    "chai": "^4.2.0",
+    "dotenv": "^8.0.0",
+    "eslint": "^6.0.1",
+    "istanbul": "^0.4.5",
+    "mocha": "^6.1.4",
+    "mocha-junit-reporter": "^1.23.0",
+    "mock-require": "^3.0.3",
+    "nock": "^10.0.6",
+    "nyc": "^14.1.1",
+    "proxyquire": "^2.1.0",
+    "sinon": "^7.3.2",
+    "tap": "^14.3.1"
+  }
+}

@@ -1,0 +1,252 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Document Management Security
+
+Parameters:
+  UUID:
+    Type: String
+  Environment:
+    Type: String
+  Project:
+    Type: String
+  DeployBucket:
+    Type: String
+  Bucket:
+    Type: String
+    Default: demoandreani
+
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    AutoPublishAlias: example
+
+Resources:
+  ItemsRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: 
+        Fn::Join: ["-", [Ref: Environment, 'demo_apigateway_api_1']]
+      StageName: 
+        Ref: Environment
+      Variables:
+        Environment: 
+          Ref: Environment
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./demo_apigateway_api_1-swagger.yaml
+  
+  ItemsRestApi2:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: 
+        Fn::Join: ["-", [Ref: Environment, 'demo_apigateway_api_2']]
+      StageName: 
+        Ref: Environment
+      Variables:
+        Environment: 
+          Ref: Environment
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./demo_apigateway_api_2-swagger.yaml
+  GetItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ../functions/getItem
+      FunctionName: 
+        Fn::Sub: ${Environment}-${Project}-GetItem
+      Role: 
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+  GetItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: GetItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsRestApi}/*/GET/items/{idItem}
+  #EXAMPLE add other permission for the same lambda      
+  GetItemPermission2:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: GetItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsRestApi2}/*/GET/items/{idItem}
+
+  PutItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ../functions/PutItem
+      FunctionName: 
+        Fn::Sub: ${Environment}-${Project}-PutItem
+      Role: 
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+  PutItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: PutItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsRestApi}/*/PUT/items/{idItem}
+
+  PostItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ../functions/postItem
+      FunctionName: 
+        Fn::Sub: ${Environment}-${Project}-PostItem
+      Role: 
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+  PostItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: PostItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsRestApi}/*/POST/items
+
+  DeleteItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ../functions/deleteItem
+      FunctionName: 
+        Fn::Sub: ${Environment}-${Project}-DeleteItem
+      Role: 
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+  DeleteItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: DeleteItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ItemsRestApi}/*/DELETE/items/{idItem}
+
+  FilesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: 
+        Ref: Bucket
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET,PUT]
+            AllowedOrigins: ['*']
+            Id: myCORSRuleId1
+            MaxAge: '3600'
+  FilesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: 
+        Ref: FilesBucket
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "s3:GetObject*"
+              - "s3:PutObject*"
+            Effect: "Allow"
+            Resource: 
+              Fn::Sub: "arn:aws:s3:::${Bucket}/*"
+            Principal:
+              AWS: 
+                Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+
+  ExampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Join:
+          - ""
+          - - Ref: Environment
+            - "Example"
+      PrimaryKey:
+        Name: idItem
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+        
+  ApiKeysTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Join:
+          - ""
+          - - Ref: Environment
+            - "ApiKeys"
+      PrimaryKey:
+        Name: key
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ../functions/authorizer
+      FunctionName: 
+        Fn::Sub: ${Environment}-${Project}-Authorizer
+      Role:
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      Environment:
+        Variables:
+          ENV:
+            Ref: Environment
+          KEYS_TABLE:
+            Ref: ApiKeysTable
+      

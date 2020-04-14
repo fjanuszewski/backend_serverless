@@ -1,0 +1,97 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: demo_api_gateway_api_2
+schemes:
+  - https
+x-amazon-apigateway-documentation:
+  version: 0.1
+  documentationParts:
+    - location:
+        type: API
+      properties:
+        description: Item API 2
+        info:
+          description: API example 2
+          version: 0.1
+paths:
+  /items/{idItem}:
+    get:
+      tags:
+        - items
+      description: Get Item Example
+      operationId: getItem
+      produces:
+        - application/json
+      security:
+        - LambdaAuth: []
+      parameters:
+        - in: path
+          type: string
+          name: idItem
+          required: true
+          description: Id item
+      x-amazon-apigateway-request-validator: "Validate-Params"
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetItem.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+      responses:
+        '200':
+          description: Respuesta Ok
+          schema:
+            $ref: "#/definitions/SchemaItem"
+        '500':
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    
+definitions:
+
+  SchemaItem:
+    type: object
+    properties:
+      idItem:
+        type: string
+      description:
+        type: string        
+  description:
+    type: string
+    
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+        
+x-amazon-apigateway-request-validators:
+  Validate-Body:
+    validateRequestParameters: false
+    validateRequestBody: true
+  Validate-Params:
+    validateRequestParameters: true
+    validateRequestBody: false
+  all:
+    validateRequestParameters: true
+    validateRequestBody: true
+
+securityDefinitions:
+  LambdaAuth:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    x-amazon-apigateway-authtype: "custom"
+    x-amazon-apigateway-authorizer:
+      type: "request"
+      identitySource: "method.request.header.Authorization"
+      authorizerResultTtlInSeconds: 0
+      authorizerCredentials: 
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      authorizerUri:
+        Fn::Join:
+          - ""
+          - - Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/'
+            - Fn::GetAtt: [ AuthorizerFunction, Arn ]
+            - Fn::Sub: '/invocations'
