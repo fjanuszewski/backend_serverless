@@ -1,0 +1,207 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: ApiGateway CRUD Template
+schemes:
+  - https
+x-amazon-apigateway-documentation:
+  version: 0.1
+  documentationParts:
+    - location:
+        type: API
+      properties:
+        description: Item API 1
+        info:
+          description: API example 1
+          version: 0.1
+paths:
+  /items/{idItem}:
+    get:
+      tags:
+        - items
+      description: Get Item Example
+      operationId: getItem
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          type: string
+          name: idItem
+          required: true
+          description: Id item
+      x-amazon-apigateway-request-validator: "Validate-Params"
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetItem.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+      responses:
+        '200':
+          description: Respuesta Ok
+          schema:
+            $ref: "#/definitions/SchemaItem"
+        '500':
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+    put:
+      tags:
+        - items
+      description: Update items example
+      operationId: putItem
+      consumes:
+        - text/html
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: idItem
+          required: true
+          description: Id Item
+          type: string
+        - in: body
+          name: description
+          required: true
+          description: Item value
+          schema:
+            $ref: "#/definitions/SchemaItem"
+      x-amazon-apigateway-request-validator: "all"
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PutItem.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+      responses:
+        '200':
+          description: Respuesta Ok
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+            Access-Control-Allow-Methods:
+              type: "string"
+            Access-Control-Allow-Headers:
+              type: "string"
+        '500':
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"  
+    delete:
+      tags:
+        - Items
+      description: Delete item from dynamoDB
+      operationId: deleteItem
+      produces:
+        - application/json
+      security:
+        - LambdaAuth: []
+      parameters:
+        - in: path
+          type: string
+          name: idItem
+          required: true
+          description: Id Item
+      x-amazon-apigateway-request-validator: "Validate-Params"
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteItem.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+      responses:
+        '200':
+          description: Respuesta Ok
+        '500':
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+  /items/:
+    post:
+      tags:
+        - items
+      description: Create item example
+      operationId: postItem
+      consumes:
+        - text/html
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: idItem
+          required: true
+          description: Id item
+          type: string
+        - in: body
+          name: description
+          required: true
+          description: Item value
+          schema:
+            $ref: "#/definitions/SchemaItem"
+      x-amazon-apigateway-request-validator: "all"
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostItem.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: POST
+        type: aws_proxy
+      responses:
+        '200':
+          description: Respuesta Ok
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+            Access-Control-Allow-Methods:
+              type: "string"
+            Access-Control-Allow-Headers:
+              type: "string"
+        '500':
+          description: Error
+          schema:
+            $ref: "#/definitions/Error"
+            
+
+definitions:
+
+  SchemaItem:
+    type: object
+    properties:
+      idItem:
+        type: string
+      description:
+        type: string        
+  Error:
+    type: object
+    properties:
+      message:
+        type: string
+        
+x-amazon-apigateway-request-validators:
+  Validate-Body:
+    validateRequestParameters: false
+    validateRequestBody: true
+  Validate-Params:
+    validateRequestParameters: true
+    validateRequestBody: false
+  all:
+    validateRequestParameters: true
+    validateRequestBody: true
+
+securityDefinitions:
+  LambdaAuth:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    x-amazon-apigateway-authtype: "custom"
+    x-amazon-apigateway-authorizer:
+      type: "request"
+      identitySource: "method.request.header.Authorization"
+      authorizerResultTtlInSeconds: 0
+      authorizerCredentials: 
+        Fn::Sub: "arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role"
+      authorizerUri:
+        Fn::Join:
+          - ""
+          - - Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/'
+            - Fn::GetAtt: [ AuthorizerFunction, Arn ]
+            - Fn::Sub: '/invocations'

@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Document Management Security
+
+Parameters:
+  Environment:
+    Type: String
+  Project:
+    Type: String
+
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    AutoPublishAlias: live
+
+Resources:
+
+  ServerlessRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: 
+        Fn::Sub: ${AWS::StackName}-ApiGateway
+      StageName: 
+        Ref: Environment
+      Variables:
+        Environment: 
+          Ref: Environment
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: ./swagger.yaml
+            
+  GetItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ./lambda/getItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-GetItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+
+  GetItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: GetItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerlessRestApi}/*/GET/items/{idItem}
+
+  PutItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ./lambda/PutItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-PutItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:UpdateItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+
+  PutItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: PutItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerlessRestApi}/*/PUT/items/{idItem}
+
+  PostItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ./lambda/postItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-PostItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:PutItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+
+  PostItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: PostItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerlessRestApi}/*/POST/items
+
+  DeleteItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ./lambda/deleteItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-DeleteItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:DeleteItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+
+  DeleteItemPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: 
+        Fn::GetAtt: DeleteItem.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerlessRestApi}/*/DELETE/items/{idItem}
+
+  ExampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-ExampleTable
+      PrimaryKey:
+        Name: idItem
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+        
+  ApiKeysTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-ApiKeysTable
+      PrimaryKey:
+        Name: key
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+
+
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Timeout: 30
+      MemorySize: 512
+      CodeUri: ./lambda/authorizer
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-Authorizer
+      Environment:
+        Variables:
+          ENV:
+            Ref: Environment
+          KEYS_TABLE:
+            Ref: ApiKeysTable
+      Policies:
+        - AWSLambdaExecute
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:Gettem"
+              Resource:
+                Fn::GetAtt: ApiKeysTable.Arn
+Outputs:
+  ProdDataEndpoint:
+    Description: "API Prod stage endpoint"
+    Value:
+      Fn::Sub: "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
