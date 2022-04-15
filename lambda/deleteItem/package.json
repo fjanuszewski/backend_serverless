@@ -10,6 +10,9 @@
     "test": "NODE_ENV=test nyc --reporter=lcov --reporter=text mocha --recursive=test/",
     "coverage": "nyc report --statements 80 --functions 80 --lines 80 --branches 80 --check-coverage --reporter=text-summary --per-file"
   },
+  "dependencies": {
+    "aws-xray-sdk": "^3.3.4"
+  },
   "devDependencies": {
     "aws-sdk": "^2.482.0",
     "aws-sdk-mock": "^4.4.0",

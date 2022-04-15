@@ -2,7 +2,6 @@
 
 This repository has a backend implemented in AWS cloudformation. In the template.yaml file you will find the following resources:
 - Lambda: For trigger in Cognito. This lambda make puts in DynamoDB for every new user.
-- Cognito: A simple template with federation with Google.
 - ApiGateway: A simple scheme with swagger
 - DynamoDB: The storage of the proyect
 
@@ -32,3 +31,12 @@ You can either implement the tamplate with your favorite SAM command, or run the
 - **CALLBACKURL**: The domain of redirect in login success
 - **LOGOUTURL**: The domain of redirect in logout success
 
+# UPDATE 13/04/2022:
+- Migrate swagger to OPENAPI 3.0
+- Refactor: Lambda Permissions
+- Add X-Ray
+
+# NEXT:
+- SDK 3.0
+- Layers example
+- swagger examples and schemas
