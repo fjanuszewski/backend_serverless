@@ -12,20 +12,20 @@ PROJECT=XXXXX #PROJECT NAME FOR THE TAGS
 
 AWS_PROFILE=XXXXX
 
+REGION_1=us-east-1
+
+echo "================== Create Bucket =================="
+aws s3api create-bucket --bucket $BUCKET
+
 echo "${YELLOW} Validating local SAM Template..."
 echo " ================================${NC}"
 sam validate --profile $AWS_PROFILE --template "template.yaml"
 
 echo "${YELLOW} Building local SAM App..."
 echo " =========================${NC}"
-npm install -g npm
-sam build --profile $AWS_PROFILE -t "template.yaml"
-
-echo "${YELLOW} Package"
-echo " ================================================= ${NC}"
-sam package --profile $AWS_PROFILE --template-file .aws-sam/build/template.yaml --output-template-file .aws-sam/build/packaged-template.yaml --s3-bucket $BUCKET
+sam build --cached
 
 echo "${YELLOW} Deploy"
 echo " ================================================= ${NC}"
-sam deploy --profile $AWS_PROFILE --region us-east-1 --template-file .aws-sam/build/packaged-template.yaml --stack-name $STACK --tags Project=$PROJECT --parameter-overrides Environment=$ENV --capabilities CAPABILITY_NAMED_IAM
+sam deploy --profile $AWS_PROFILE --s3-bucket $BUCKET --region $REGION_1 --capabilities CAPABILITY_NAMED_IAM --stack-name $STACK --tags Project=$PROJECT --parameter-overrides Project=$PROJECT Environment=$ENV
 

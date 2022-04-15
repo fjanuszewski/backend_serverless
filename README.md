@@ -25,11 +25,7 @@ You can either implement the tamplate with your favorite SAM command, or run the
 - **BUCKET**: Bucket is required for [SAM Package](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-cli-command-reference-sam-package.html)
 - **STACK**: Name of stack in CloudFormation, is reference for the name of objects in template
 - **PROJECT**: Tag for all resources
-- **CLIENTID**: We can find this in [google console](https://developers.google.com/adwords/api/docs/guides/authentication)
-- **CLIENT_SECRET**: We can find this in [google console](https://developers.google.com/adwords/api/docs/guides/authentication)
-- **POOL_DOMAIN**: The name of the domain for the Cognito pool.
-- **CALLBACKURL**: The domain of redirect in login success
-- **LOGOUTURL**: The domain of redirect in logout success
+
 
 # UPDATE 13/04/2022:
 - Migrate swagger to OPENAPI 3.0
