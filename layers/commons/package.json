@@ -1,7 +1,7 @@
 {
-  "name": "put-template",
+  "name": "commons-layer",
   "version": "1.0.0",
-  "description": "Update HTML Template in Dynamo",
+  "description": "commons layer for crud template",
   "main": "app.js",
   "license": "MIT",
   "scripts": {
