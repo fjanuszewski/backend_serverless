@@ -15,11 +15,11 @@ AWS_PROFILE=XXXXX
 REGION_1=us-east-1
 
 echo "================== Create Bucket =================="
-aws s3api create-bucket --bucket $BUCKET
+aws s3api create-bucket --bucket $BUCKET --profile $AWS_PROFILE
 
 echo "${YELLOW} Validating local SAM Template..."
 echo " ================================${NC}"
-sam validate --profile $AWS_PROFILE --template "template.yaml"
+sam validate --profile $AWS_PROFILE --region $REGION_1 --template "template.yaml"
 
 echo "${YELLOW} Building local SAM App..."
 echo " =========================${NC}"
