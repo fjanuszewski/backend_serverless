@@ -15,6 +15,18 @@ Globals:
     AutoPublishAlias: live
 
 Resources:
+  CommonsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName:
+        Fn::Sub: ${AWS::StackName}-CommonsLayer
+      Description: "Commons Libs"
+      ContentUri: ./layers/commons
+      LicenseInfo: Available under the MIT-0 license.
+      CompatibleRuntimes:
+        - nodejs14.x
+    Metadata:
+      BuildMethod: nodejs14.x
 
   ServerlessRestApi:
     Type: AWS::Serverless::Api
@@ -38,9 +50,11 @@ Resources:
       Handler: app.handler
       Timeout: 30
       MemorySize: 128
-      CodeUri: ./lambda/getItem
+      CodeUri: ./functions/getItem
       FunctionName: 
-        Fn::Sub: ${AWS::StackName}-GetItem
+        Fn::Sub: ${AWS::StackName}-GetItem      
+      Layers:
+        - Ref: CommonsLayer
       Environment:
         Variables:
           ENV: 
@@ -71,7 +85,7 @@ Resources:
       Handler: app.handler
       Timeout: 30
       MemorySize: 128
-      CodeUri: ./lambda/PutItem
+      CodeUri: ./functions/PutItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-PutItem
       Environment:
@@ -104,7 +118,7 @@ Resources:
       Handler: app.handler
       Timeout: 30
       MemorySize: 128
-      CodeUri: ./lambda/postItem
+      CodeUri: ./functions/postItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-PostItem
       Environment:
@@ -137,7 +151,7 @@ Resources:
       Handler: app.handler
       Timeout: 30
       MemorySize: 128
-      CodeUri: ./lambda/deleteItem
+      CodeUri: ./functions/deleteItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-DeleteItem
       Environment:
@@ -184,7 +198,7 @@ Resources:
       PrimaryKey:
         Name: key
         Type: String
-      ProvisionedThroughput:
+      ProvisionedThroughput: #remove this if you need on-demand
         ReadCapacityUnits: 2
         WriteCapacityUnits: 2
 
@@ -195,7 +209,7 @@ Resources:
       Handler: app.handler
       Timeout: 30
       MemorySize: 128
-      CodeUri: ./lambda/authorizer
+      CodeUri: ./functions/authorizer
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-Authorizer
       Environment:
