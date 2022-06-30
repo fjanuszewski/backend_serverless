@@ -1,0 +1,11 @@
+{
+  "name": "utils-layer",
+  "version": "1.0.0",
+  "description": "Nodejs",
+  "license": "MIT",
+  "dependencies": {
+    "joi": "^17.6.0",
+    "lambda-log": "^2.4.0",
+    "lodash": "^4.17.21"
+  }
+}

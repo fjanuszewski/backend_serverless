@@ -1,12 +1,7 @@
 
 const AWSXRay = require('aws-xray-sdk')
 const AWS = AWSXRay.captureAWS(require('aws-sdk'))
-
-const responseFactory = (error, result) => ({
-  statusCode: (error) ? error.response.status : 200,
-  headers: { 'Access-Control-Allow-Origin': '*' },
-  body: (error) ? JSON.stringify(error.response.data) : JSON.stringify(result)
-});
+const {responseHandler} = require('/opt/nodejs/commons')
 
 const getItem = (idItem) => {
   const documentClient = new AWS.DynamoDB.DocumentClient();
@@ -31,10 +26,10 @@ exports.handler = async (event) => {
   console.log('START =>', JSON.stringify(event));
   try {
     const res = await getItem(event.pathParameters.idItem);
-    return responseFactory(null, res);
+    return responseHandler(null, res);
   } catch (error) {
     console.log(error);
-    return responseFactory({
+    return responseHandler({
       response: error.response || { status: 500, data: { message: 'Internal server error.' } }
     });
   }

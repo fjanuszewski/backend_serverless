@@ -2,7 +2,7 @@
   "name": "commons-layer",
   "version": "1.0.0",
   "description": "commons layer for crud template",
-  "main": "app.js",
+  "main": "commons.js",
   "license": "MIT",
   "scripts": {
     "lint": "node_modules/.bin/eslint *.js --rulesdir=\"./node_modules/eslint/lib/rules\" --color",
