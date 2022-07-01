@@ -32,6 +32,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-amazon-apigateway-request-validator: Validate-Params
+      ##OLD MODEL FOR INTEGRATION
+      # x-amazon-apigateway-integration:
+      #   httpMethod: POST
+      #   type: aws_proxy
+      #   uri:
+      #     Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetItem.Arn}/invocations
+      #   passthroughBehavior: when_no_match
     put:
       tags:
       - items
@@ -154,26 +161,26 @@ components:
       properties:
         message:
           type: string
-  securitySchemes:
-    LambdaAuth:
-      type: apiKey
-      name: Authorization
-      in: header
-      x-amazon-apigateway-authtype: custom
-      x-amazon-apigateway-authorizer:
-        type: request
-        identitySource: method.request.header.Authorization
-        authorizerResultTtlInSeconds: 0
-        authorizerCredentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role
-        authorizerUri:
-          Fn::Join:
-          - ""
-          - - Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
-            - Fn::GetAtt:
-              - AuthorizerFunction
-              - Arn
-            - Fn::Sub: /invocations
+  # securitySchemes:
+  #   LambdaAuth:
+  #     type: apiKey
+  #     name: Authorization
+  #     in: header
+  #     x-amazon-apigateway-authtype: custom
+  #     x-amazon-apigateway-authorizer:
+  #       type: request
+  #       identitySource: method.request.header.Authorization
+  #       authorizerResultTtlInSeconds: 0
+  #       authorizerCredentials:
+  #         Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role
+  #       authorizerUri:
+  #         Fn::Join:
+  #         - ""
+  #         - - Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+  #           - Fn::GetAtt:
+  #             - AuthorizerFunction
+  #             - Arn
+  #           - Fn::Sub: /invocations
 x-amazon-apigateway-documentation:
   version: 0.1
   documentationParts:

@@ -12,7 +12,9 @@ Parameters:
 Globals:
   Function:
     Runtime: nodejs14.x
-    AutoPublishAlias: live
+    Handler: app.handler
+    Timeout: 30
+    MemorySize: 128
 
 Resources:
   CommonsLayer:
@@ -28,7 +30,7 @@ Resources:
     Metadata:
       BuildMethod: nodejs14.x
 
-  ServerlessRestApi:
+  SampleApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: 
@@ -47,9 +49,11 @@ Resources:
   GetItem:
     Type: AWS::Serverless::Function
     Properties:
+      Runtime: nodejs14.x
       Handler: app.handler
       Timeout: 30
       MemorySize: 128
+      AutoPublishAlias: live
       CodeUri: ./functions/getItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-GetItem      
@@ -77,14 +81,22 @@ Resources:
             Path: /items/{idItem}
             Method: GET
             ApiId:
-              Ref: ServerlessRestApi
+              Ref: SampleApi
+  ##OLD MODEL FOR INTEGRATION
+  # GetItemLambdaPermission:
+  #   Type: AWS::Lambda::Permission
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName:
+  #       Ref: GetItem
+  #     Principal: apigateway.amazonaws.com
+  #     SourceArn:
+  #       Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SampleApi}/*/GET/items/{idItem}
+
 
   PutItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/PutItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-PutItem
@@ -110,14 +122,11 @@ Resources:
             Path: /items/{idItem}
             Method: PUT
             ApiId:
-              Ref: ServerlessRestApi
+              Ref: SampleApi
 
   PostItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/postItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-PostItem
@@ -143,14 +152,11 @@ Resources:
             Path: /items/
             Method: POST
             ApiId:
-              Ref: ServerlessRestApi
+              Ref: SampleApi
 
   DeleteItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/deleteItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-DeleteItem
@@ -176,7 +182,7 @@ Resources:
             Path: /items/{idItem}
             Method: DELETE
             ApiId:
-              Ref: ServerlessRestApi
+              Ref: SampleApi
 
   ExampleTable:
     Type: AWS::Serverless::SimpleTable
@@ -186,10 +192,10 @@ Resources:
       PrimaryKey:
         Name: idItem
         Type: String
-      ProvisionedThroughput:
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
-        
+      # ProvisionedThroughput: #Add this if you need Provisioned
+      #   ReadCapacityUnits: 2
+      #   WriteCapacityUnits: 2
+
   ApiKeysTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -198,17 +204,14 @@ Resources:
       PrimaryKey:
         Name: key
         Type: String
-      ProvisionedThroughput: #remove this if you need on-demand
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
+      # ProvisionedThroughput: #Add this if you need Provisioned
+      #   ReadCapacityUnits: 2
+      #   WriteCapacityUnits: 2
 
 
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/authorizer
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-Authorizer
@@ -231,4 +234,4 @@ Outputs:
   ProdDataEndpoint:
     Description: "API Prod stage endpoint"
     Value:
-      Fn::Sub: "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
+      Fn::Sub: "https://${SampleApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
