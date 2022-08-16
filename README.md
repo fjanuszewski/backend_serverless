@@ -32,7 +32,9 @@ You can either implement the tamplate with your favorite SAM command, or run the
 - Refactor: Lambda Permissions
 - Add X-Ray
 
+# UPDATE 13/04/2022:
+- Layers example
+
 # NEXT:
 - SDK 3.0
-- Layers example
 - swagger examples and schemas

@@ -104,13 +104,6 @@ paths:
       - items
       description: Create item example
       operationId: postItem
-      parameters:
-      - name: idItem
-        in: query
-        description: Id item
-        required: true
-        schema:
-          type: string
       requestBody:
         description: Item value
         content:
@@ -154,26 +147,26 @@ components:
       properties:
         message:
           type: string
-  securitySchemes:
-    LambdaAuth:
-      type: apiKey
-      name: Authorization
-      in: header
-      x-amazon-apigateway-authtype: custom
-      x-amazon-apigateway-authorizer:
-        type: request
-        identitySource: method.request.header.Authorization
-        authorizerResultTtlInSeconds: 0
-        authorizerCredentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role
-        authorizerUri:
-          Fn::Join:
-          - ""
-          - - Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
-            - Fn::GetAtt:
-              - AuthorizerFunction
-              - Arn
-            - Fn::Sub: /invocations
+  # securitySchemes:
+  #   LambdaAuth:
+  #     type: apiKey
+  #     name: Authorization
+  #     in: header
+  #     x-amazon-apigateway-authtype: custom
+  #     x-amazon-apigateway-authorizer:
+  #       type: request
+  #       identitySource: method.request.header.Authorization
+  #       authorizerResultTtlInSeconds: 0
+  #       authorizerCredentials:
+  #         Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/${Environment}-${Project}-Role
+  #       authorizerUri:
+  #         Fn::Join:
+  #         - ""
+  #         - - Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+  #           - Fn::GetAtt:
+  #             - AuthorizerFunction
+  #             - Arn
+  #           - Fn::Sub: /invocations
 x-amazon-apigateway-documentation:
   version: 0.1
   documentationParts:
@@ -186,11 +179,11 @@ x-amazon-apigateway-documentation:
         version: 0.1
 x-amazon-apigateway-request-validators:
   Validate-Body:
-    validateRequestParameters: false
+    validateRequestParameters: true
     validateRequestBody: true
   Validate-Params:
     validateRequestParameters: true
-    validateRequestBody: false
+    validateRequestBody: true
   all:
     validateRequestParameters: true
     validateRequestBody: true

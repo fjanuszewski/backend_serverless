@@ -1,29 +1,36 @@
 
 const AWSXRay = require('aws-xray-sdk')
-const AWS = AWSXRay.captureAWS(require('aws-sdk'))
 const {responseHandler} = require('/opt/nodejs/commons')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, GetCommand } = require('@aws-sdk/lib-dynamodb');
 
-const getItem = (idItem) => {
-  const documentClient = new AWS.DynamoDB.DocumentClient();
-  return new Promise((resolve, reject) => {
-    const params = {
-      TableName: process.env.EXAMPLE_TABLE,
-      Key: {
-        idItem
-      }
-    };
-    documentClient.get(params, (err, data) => {
-      if (err)
-        return reject(err);
-      if (!data.Item)
-        return reject({ response: { status: 404, data: { message: 'idItem not found.' } } });
-      resolve(data.Item);
-    });
-  });
-}
+const getItem = async (idItem) => {
+  const dynamoDbClient = AWSXRay.captureAWSv3Client(new DynamoDBClient({}))
+  const dynamodbDocumentClient = DynamoDBDocumentClient.from(dynamoDbClient);
+
+  try {
+    const result = await dynamodbDocumentClient.send(
+      new GetCommand({
+        TableName: process.env.EXAMPLE_TABLE,
+        Key: { idItem },
+      })
+    );
+    if (!result.Item)
+      throw({ response: { status: 404, data: { message: 'idItem not found.' } } });
+    
+    return result.Item;
+  } catch (error) {
+    throw error;
+  }
+};
 
 exports.handler = async (event) => {
   console.log('START =>', JSON.stringify(event));
+
+  AWSXRay.captureFunc('annotations', function(subsegment) {
+    subsegment.addAnnotation('idItem', event.pathParameters.idItem);
+  });
+  
   try {
     const res = await getItem(event.pathParameters.idItem);
     return responseHandler(null, res);

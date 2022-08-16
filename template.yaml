@@ -12,7 +12,12 @@ Parameters:
 Globals:
   Function:
     Runtime: nodejs14.x
-    AutoPublishAlias: live
+    Handler: app.handler
+    Timeout: 30
+    MemorySize: 128
+    Tracing: Active
+    Layers:
+      - Ref: CommonsLayer
 
 Resources:
   CommonsLayer:
@@ -28,33 +33,41 @@ Resources:
     Metadata:
       BuildMethod: nodejs14.x
 
-  ServerlessRestApi:
+  SampleApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: 
         Fn::Sub: ${AWS::StackName}-ApiGateway
       StageName: 
         Ref: Environment
-      Variables:
-        Environment: 
-          Ref: Environment
-      DefinitionBody:
-        Fn::Transform:
-          Name: AWS::Include
-          Parameters:
-            Location: ./swagger.yaml
-            
+      Models:
+        User:
+          type: object
+          required:
+            - username
+            - employee_id
+          properties:
+            username:
+              type: string
+            employee_id:
+              type: integer
+            department:
+              type: string
+        Item:
+          type: object
+          properties:
+            count:
+              type: integer
+            category:
+              type: string
+            price:
+              type: integer
   GetItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/getItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-GetItem      
-      Layers:
-        - Ref: CommonsLayer
       Environment:
         Variables:
           ENV: 
@@ -72,19 +85,16 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/{idItem}
             Method: GET
-            ApiId:
-              Ref: ServerlessRestApi
+            RestApiId:
+              Ref: SampleApi
 
   PutItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/PutItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-PutItem
@@ -105,19 +115,16 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/{idItem}
             Method: PUT
-            ApiId:
-              Ref: ServerlessRestApi
+            RestApiId:
+              Ref: SampleApi
 
   PostItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/postItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-PostItem
@@ -138,19 +145,16 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/
             Method: POST
-            ApiId:
-              Ref: ServerlessRestApi
+            RestApiId:
+              Ref: SampleApi
 
   DeleteItem:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/deleteItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-DeleteItem
@@ -171,12 +175,12 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/{idItem}
             Method: DELETE
-            ApiId:
-              Ref: ServerlessRestApi
+            RestApiId:
+              Ref: SampleApi
 
   ExampleTable:
     Type: AWS::Serverless::SimpleTable
@@ -186,10 +190,10 @@ Resources:
       PrimaryKey:
         Name: idItem
         Type: String
-      ProvisionedThroughput:
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
-        
+      # ProvisionedThroughput: #Add this if you need Provisioned
+      #   ReadCapacityUnits: 2
+      #   WriteCapacityUnits: 2
+
   ApiKeysTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -198,17 +202,14 @@ Resources:
       PrimaryKey:
         Name: key
         Type: String
-      ProvisionedThroughput: #remove this if you need on-demand
-        ReadCapacityUnits: 2
-        WriteCapacityUnits: 2
+      # ProvisionedThroughput: #Add this if you need Provisioned
+      #   ReadCapacityUnits: 2
+      #   WriteCapacityUnits: 2
 
 
   AuthorizerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
       CodeUri: ./functions/authorizer
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-Authorizer
@@ -231,4 +232,4 @@ Outputs:
   ProdDataEndpoint:
     Description: "API Prod stage endpoint"
     Value:
-      Fn::Sub: "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
+      Fn::Sub: "https://${SampleApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
