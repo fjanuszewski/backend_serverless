@@ -32,13 +32,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-amazon-apigateway-request-validator: Validate-Params
-      ##OLD MODEL FOR INTEGRATION
-      # x-amazon-apigateway-integration:
-      #   httpMethod: POST
-      #   type: aws_proxy
-      #   uri:
-      #     Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetItem.Arn}/invocations
-      #   passthroughBehavior: when_no_match
     put:
       tags:
       - items
@@ -111,13 +104,6 @@ paths:
       - items
       description: Create item example
       operationId: postItem
-      parameters:
-      - name: idItem
-        in: query
-        description: Id item
-        required: true
-        schema:
-          type: string
       requestBody:
         description: Item value
         content:
@@ -193,11 +179,11 @@ x-amazon-apigateway-documentation:
         version: 0.1
 x-amazon-apigateway-request-validators:
   Validate-Body:
-    validateRequestParameters: false
+    validateRequestParameters: true
     validateRequestBody: true
   Validate-Params:
     validateRequestParameters: true
-    validateRequestBody: false
+    validateRequestBody: true
   all:
     validateRequestParameters: true
     validateRequestBody: true

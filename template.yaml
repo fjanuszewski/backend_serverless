@@ -15,6 +15,9 @@ Globals:
     Handler: app.handler
     Timeout: 30
     MemorySize: 128
+    Tracing: Active
+    Layers:
+      - Ref: CommonsLayer
 
 Resources:
   CommonsLayer:
@@ -37,28 +40,34 @@ Resources:
         Fn::Sub: ${AWS::StackName}-ApiGateway
       StageName: 
         Ref: Environment
-      Variables:
-        Environment: 
-          Ref: Environment
-      DefinitionBody:
-        Fn::Transform:
-          Name: AWS::Include
-          Parameters:
-            Location: ./swagger.yaml
-            
+      Models:
+        User:
+          type: object
+          required:
+            - username
+            - employee_id
+          properties:
+            username:
+              type: string
+            employee_id:
+              type: integer
+            department:
+              type: string
+        Item:
+          type: object
+          properties:
+            count:
+              type: integer
+            category:
+              type: string
+            price:
+              type: integer
   GetItem:
     Type: AWS::Serverless::Function
     Properties:
-      Runtime: nodejs14.x
-      Handler: app.handler
-      Timeout: 30
-      MemorySize: 128
-      AutoPublishAlias: live
       CodeUri: ./functions/getItem
       FunctionName: 
         Fn::Sub: ${AWS::StackName}-GetItem      
-      Layers:
-        - Ref: CommonsLayer
       Environment:
         Variables:
           ENV: 
@@ -76,23 +85,12 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/{idItem}
             Method: GET
-            ApiId:
+            RestApiId:
               Ref: SampleApi
-  ##OLD MODEL FOR INTEGRATION
-  # GetItemLambdaPermission:
-  #   Type: AWS::Lambda::Permission
-  #   Properties:
-  #     Action: lambda:InvokeFunction
-  #     FunctionName:
-  #       Ref: GetItem
-  #     Principal: apigateway.amazonaws.com
-  #     SourceArn:
-  #       Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SampleApi}/*/GET/items/{idItem}
-
 
   PutItem:
     Type: AWS::Serverless::Function
@@ -117,11 +115,11 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/{idItem}
             Method: PUT
-            ApiId:
+            RestApiId:
               Ref: SampleApi
 
   PostItem:
@@ -147,11 +145,11 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/
             Method: POST
-            ApiId:
+            RestApiId:
               Ref: SampleApi
 
   DeleteItem:
@@ -177,11 +175,11 @@ Resources:
                 Fn::GetAtt: ExampleTable.Arn
       Events:
         HttpEvent:
-          Type: HttpApi 
+          Type: Api 
           Properties:
             Path: /items/{idItem}
             Method: DELETE
-            ApiId:
+            RestApiId:
               Ref: SampleApi
 
   ExampleTable:
