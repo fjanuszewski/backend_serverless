@@ -1,0 +1,8 @@
+{
+    "PostItem": {
+        "EXAMPLE_TABLE": "develop-example-table"
+    },
+    "GetItem": {
+        "EXAMPLE_TABLE": "develop-example-table"
+    }
+}

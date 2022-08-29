@@ -8,7 +8,7 @@
     "axios": "^0.19.0",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^1.6.0",
-    "aws-xray-sdk": "^3.3.4"
+    "aws-xray-sdk": "^3.3.7"
   },
   "scripts": {
     "lint": "node_modules/.bin/eslint *.js --rulesdir=\"./node_modules/eslint/lib/rules\" --color",
@@ -17,6 +17,7 @@
     "coverage": "nyc report --statements 80 --functions 80 --lines 80 --branches 80 --check-coverage --reporter=text-summary --per-file"
   },
   "devDependencies": {
+    "aws-xray-sdk": "^3.3.7",
     "aws-sdk": "^2.482.0",
     "aws-sdk-mock": "^4.4.0",
     "axios-mock-adapter": "^1.16.0",
