@@ -6,14 +6,18 @@ const { DynamoDBDocumentClient, DeleteCommand } = require('@aws-sdk/lib-dynamodb
 const deleteItem = async (idItem) => {
   const dynamoDbClient = AWSXRay.captureAWSv3Client(new DynamoDBClient({}))
   const dynamodbDocumentClient = DynamoDBDocumentClient.from(dynamoDbClient);
+  try {
       const result = await dynamodbDocumentClient.send(
         new DeleteCommand({
-          TableName: process.env.ACCOUNTS_TABLE,
+          TableName: process.env.EXAMPLE_TABLE,
           Key: { idItem },
           ConditionExpression: 'attribute_exists(idItem)',
         })
       );
       return result;
+    } catch (err) {
+      return err
+    }
   };
 
 exports.handler = async (event) => {

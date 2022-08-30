@@ -7,7 +7,7 @@ const { DynamoDBDocumentClient, GetCommand } = require('@aws-sdk/lib-dynamodb');
 const getItem = async (idItem) => {
   const dynamoDbClient = AWSXRay.captureAWSv3Client(new DynamoDBClient({}))
   const dynamodbDocumentClient = DynamoDBDocumentClient.from(dynamoDbClient);
-
+  try {
     const result = await dynamodbDocumentClient.send(
       new GetCommand({
         TableName: process.env.EXAMPLE_TABLE,
@@ -15,6 +15,9 @@ const getItem = async (idItem) => {
       })
     );
     return result;
+  } catch (err) {
+    return err
+  }
 };
 
 exports.handler = async (event) => {
