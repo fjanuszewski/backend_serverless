@@ -1,7 +1,7 @@
 {
-  "name": "delete-template",
+  "name": "delete-item",
   "version": "1.0.0",
-  "description": "Delete HTML Template from Dynamo",
+  "description": "Delete item from DynamoDB",
   "main": "app.js",
   "license": "MIT",
   "scripts": {
@@ -11,11 +11,13 @@
     "coverage": "nyc report --statements 80 --functions 80 --lines 80 --branches 80 --check-coverage --reporter=text-summary --per-file"
   },
   "dependencies": {
-    "aws-xray-sdk": "^3.3.7"
+    "aws-xray-sdk": "^3.3.7",
+    "@aws-sdk/client-dynamodb": "^3.45.0",
+    "@aws-sdk/lib-dynamodb": "^3.45.0"
   },
   "devDependencies": {
-    "aws-sdk": "^2.482.0",
-    "aws-xray-sdk": "^3.3.7",
+    "@aws-sdk/client-dynamodb": "^3.45.0",
+    "@aws-sdk/lib-dynamodb": "^3.45.0",
     "aws-sdk-mock": "^4.4.0",
     "axios-mock-adapter": "^1.16.0",
     "chai": "^4.2.0",

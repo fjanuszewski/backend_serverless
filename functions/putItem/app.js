@@ -42,7 +42,7 @@ exports.handler = async (event) => {
   } catch (error) {
     console.log(error);
     return responseFactory({
-      response: error.response || { status: 500, data: { message: 'Internal server error.' } }
+      response: error || { status: 500, data: { message: 'Internal server error.' } }
     });
   }
 };

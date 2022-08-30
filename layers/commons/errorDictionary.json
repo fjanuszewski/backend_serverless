@@ -1,0 +1,26 @@
+[
+    {
+        "status": 406,
+        "key": "emptyParams",
+        "code": "empty-params",
+        "message": "Uno o mas parametros estan vacios"
+    },
+    {
+        "status": 406,
+        "key": "invalidParams",
+        "code": "invalid-params",
+        "message": "Uno o mas parametros son invalidos"
+    },
+    {
+        "status": 400,
+        "key": "idItemNotFound",
+        "code": "idItem-not-found",
+        "message": "idItem no encontrado"
+    },
+    {
+        "status": 400,
+        "key": "idItemAlreadyExist",
+        "code": "idItem-already-exist",
+        "message": "idItem ya existente"
+    }
+]

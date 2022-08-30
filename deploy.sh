@@ -29,3 +29,10 @@ echo "${YELLOW} Deploy"
 echo " ================================================= ${NC}"
 sam deploy --profile $AWS_PROFILE --s3-bucket $BUCKET --region $REGION_1 --capabilities CAPABILITY_NAMED_IAM --stack-name $STACK --tags Project=$PROJECT --parameter-overrides Project=$PROJECT Environment=$ENV
 
+echo "${YELLOW} Empty temporaly bucket for SAM..."
+echo " ================================================= ${NC}"
+aws s3 rm s3://$BUCKET --recursive
+
+echo "${YELLOW} Deleting temporaly bucket for SAM..."
+echo " ================================================= ${NC}"
+aws s3 rb s3://$BUCKET --force

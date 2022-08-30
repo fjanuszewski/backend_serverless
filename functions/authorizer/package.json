@@ -1,24 +1,23 @@
 {
   "name": "authorizer",
   "version": "1.0.0",
-  "description": "Lambda Authorizer",
+  "description": "Authorizer Lambda",
   "main": "app.js",
   "license": "MIT",
-  "dependencies": {
-    "axios": "^0.19.0",
-    "jsonwebtoken": "^8.5.1",
-    "jwks-rsa": "^1.6.0",
-    "aws-xray-sdk": "^3.3.7"
-  },
   "scripts": {
     "lint": "node_modules/.bin/eslint *.js --rulesdir=\"./node_modules/eslint/lib/rules\" --color",
     "lint:fix": "node_modules/.bin/eslint *.js --rulesdir=\"./node_modules/eslint/lib/rules\" --fix --color",
     "test": "NODE_ENV=test nyc --reporter=lcov --reporter=text mocha --recursive=test/",
     "coverage": "nyc report --statements 80 --functions 80 --lines 80 --branches 80 --check-coverage --reporter=text-summary --per-file"
   },
-  "devDependencies": {
+  "dependencies": {
     "aws-xray-sdk": "^3.3.7",
-    "aws-sdk": "^2.482.0",
+    "@aws-sdk/client-dynamodb": "^3.45.0",
+    "@aws-sdk/lib-dynamodb": "^3.45.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.45.0",
+    "@aws-sdk/lib-dynamodb": "^3.45.0",
     "aws-sdk-mock": "^4.4.0",
     "axios-mock-adapter": "^1.16.0",
     "chai": "^4.2.0",

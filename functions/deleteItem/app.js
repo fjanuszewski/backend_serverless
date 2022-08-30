@@ -1,39 +1,35 @@
 const AWSXRay = require('aws-xray-sdk')
-const AWS = AWSXRay.captureAWS(require('aws-sdk'))
+const {responseHandler} = require('/opt/nodejs/commons')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 
-const responseFactory = (error, result) => ({
-  statusCode: (error) ? error.response.status : 200,
-  headers: { 'Access-Control-Allow-Origin': '*' },
-  body: (error) ? JSON.stringify(error.response.data) : JSON.stringify(result)
-});
-
-const deleteItem = (idItem) => {
-  const documentClient = new AWS.DynamoDB.DocumentClient();
-  return new Promise((resolve, reject) => {
-    const params = {
-      TableName: process.env.EXAMPLE_TABLE,
-      Key: { idItem },
-      ConditionExpression: 'attribute_exists(idItem)'
-    };
-    documentClient.delete(params, (err, data) => {
-      if (err)
-        return reject(err);
-      if (!data)
-        return reject({ response: { status: 404, data: { message: 'idItem not found.' } } });
-      resolve(data);
-    });
-  });
-}
+const deleteItem = async (idItem) => {
+  const dynamoDbClient = AWSXRay.captureAWSv3Client(new DynamoDBClient({}))
+  const dynamodbDocumentClient = DynamoDBDocumentClient.from(dynamoDbClient);
+      const result = await dynamodbDocumentClient.send(
+        new DeleteCommand({
+          TableName: process.env.ACCOUNTS_TABLE,
+          Key: { idItem },
+          ConditionExpression: 'attribute_exists(idItem)',
+        })
+      );
+      return result;
+  };
 
 exports.handler = async (event) => {
   console.log('START =>', JSON.stringify(event));
+
+  AWSXRay.captureFunc('annotations', function(subsegment) {
+    subsegment.addAnnotation('idItem', event.pathParameters.idItem);
+  });
+  const idItem =event.pathParameters.idItem.toString()
   try {
-    await deleteItem(event.pathParameters.idItem);
-    return responseFactory({ response: { status: 204, data: {} } });
+    const res = await deleteItem(idItem);
+    return responseHandler(null, res);
   } catch (error) {
-    console.log(error);
-    return responseFactory({
-      response: error.response || { status: 500, data: { message: 'Internal server error.' } }
+    console.error(error);
+    return responseHandler({
+      response: error || { status: 500, data: { message: 'Internal server error.' } }
     });
   }
 };

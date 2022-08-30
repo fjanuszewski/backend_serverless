@@ -8,20 +8,13 @@ const getItem = async (idItem) => {
   const dynamoDbClient = AWSXRay.captureAWSv3Client(new DynamoDBClient({}))
   const dynamodbDocumentClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
-  try {
     const result = await dynamodbDocumentClient.send(
       new GetCommand({
         TableName: process.env.EXAMPLE_TABLE,
         Key: { idItem },
       })
     );
-    if (!result.Item)
-      throw({ response: { status: 404, data: { message: 'idItem not found.' } } });
-    
-    return result.Item;
-  } catch (error) {
-    throw error;
-  }
+    return result;
 };
 
 exports.handler = async (event) => {
@@ -30,14 +23,13 @@ exports.handler = async (event) => {
   AWSXRay.captureFunc('annotations', function(subsegment) {
     subsegment.addAnnotation('idItem', event.pathParameters.idItem);
   });
-  
   try {
     const res = await getItem(event.pathParameters.idItem);
     return responseHandler(null, res);
   } catch (error) {
     console.log(error);
     return responseHandler({
-      response: error.response || { status: 500, data: { message: 'Internal server error.' } }
+      response: error || { status: 500, data: { message: 'Internal server error.' } }
     });
   }
 };
