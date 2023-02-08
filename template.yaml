@@ -1,0 +1,351 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Demo serverless CRUD
+
+Parameters:
+  Environment:
+    Type: String
+  Project:
+    Type: String
+  debug:
+    Type: String
+    Default: "true"
+
+Globals:
+  Function:
+    Runtime: nodejs14.x
+    Handler: app.handler
+    Timeout: 30
+    MemorySize: 128
+    Tracing: Active
+    Layers:
+      - Ref: CommonsLayer
+
+Resources:
+  CommonsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName:
+        Fn::Sub: ${AWS::StackName}-CommonsLayer
+      Description: "Commons Libs"
+      ContentUri: ./layers/commons
+      LicenseInfo: Available under the MIT-0 license.
+      CompatibleRuntimes:
+        - nodejs14.x
+    Metadata:
+      BuildMethod: nodejs14.x
+
+  SampleApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: 
+        Fn::Sub: ${AWS::StackName}-ApiGateway
+      StageName: 
+        Ref: Environment
+      Models:
+        User:
+          type: object
+          required:
+            - username
+            - employee_id
+          properties:
+            username:
+              type: string
+            employee_id:
+              type: integer
+            department:
+              type: string
+        Item:
+          type: object
+          properties:
+            count:
+              type: integer
+            category:
+              type: string
+            price:
+              type: integer
+  GetItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/getItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-GetItem      
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - AWSXRayDaemonWriteAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+      Events:
+        HttpEvent:
+          Type: Api 
+          Properties:
+            Path: /items/{idItem}
+            Method: GET
+            RestApiId:
+              Ref: SampleApi
+
+  PutItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/PutItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-PutItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - AWSXRayDaemonWriteAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:UpdateItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+      Events:
+        HttpEvent:
+          Type: Api 
+          Properties:
+            Path: /items/{idItem}
+            Method: PUT
+            RestApiId:
+              Ref: SampleApi
+
+  PostItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/postItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-PostItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - AWSXRayDaemonWriteAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:PutItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+      Events:
+        HttpEvent:
+          Type: Api 
+          Properties:
+            Path: /items/
+            Method: POST
+            RestApiId:
+              Ref: SampleApi
+
+  DeleteItem:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/deleteItem
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-DeleteItem
+      Environment:
+        Variables:
+          ENV: 
+            Ref: Environment
+          EXAMPLE_TABLE: 
+            Ref: ExampleTable
+      Policies:
+        - AWSLambdaExecute
+        - AWSXRayDaemonWriteAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:DeleteItem"
+              Resource:
+                Fn::GetAtt: ExampleTable.Arn
+      Events:
+        HttpEvent:
+          Type: Api 
+          Properties:
+            Path: /items/{idItem}
+            Method: DELETE
+            RestApiId:
+              Ref: SampleApi
+
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UsernameConfiguration: 
+        CaseSensitive: false
+      AutoVerifiedAttributes:
+        - email
+      UserPoolName: !Sub ${AWS::StackName}-user-pool
+      LambdaConfig:
+        PostConfirmation:
+          Fn::GetAtt: [PostConfirmationTrigger, Arn]
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: avatar
+          AttributeDataType: String
+          Mutable: false
+          Required: false
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      AllowedOAuthFlowsUserPoolClient: true
+      CallbackURLs:
+        - http://localhost:4200/dashboard
+        - http://localhost:4200/
+      LogoutURLs:
+        - http://localhost:4200/
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      AllowedOAuthScopes:
+        - phone
+        - email
+        - openid
+        - profile
+      SupportedIdentityProviders:
+        - COGNITO
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub ${AWS::StackName}
+      UserPoolId: !Ref CognitoUserPool
+
+  PostConfirmationTrigger:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/postConfirmationTrigger
+      Environment:
+        Variables:
+          DEBUG:
+            Ref: debug
+          TABLE_EMPLOYEE:
+            Ref: EmployeeTable
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:PutItem"
+              Resource:
+                Fn::GetAtt: EmployeeTable.Arn
+            - Effect: Allow
+              Action:
+                - cognito-idp:AdminAddUserToGroup
+              Resource: "*"
+
+  PostConfirmationTriggerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::GetAtt: [PostConfirmationTrigger, Arn]
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPool}
+
+  ExampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-ExampleTable
+      PrimaryKey:
+        Name: idItem
+        Type: String
+      # ProvisionedThroughput: #Add this if you need Provisioned
+      #   ReadCapacityUnits: 2
+      #   WriteCapacityUnits: 2
+
+  EmployeeTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-employees
+      PrimaryKey:
+        Name: email
+        Type: String
+
+  ApiKeysTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-ApiKeysTable
+      PrimaryKey:
+        Name: key
+        Type: String
+      # ProvisionedThroughput: #Add this if you need Provisioned
+      #   ReadCapacityUnits: 2
+      #   WriteCapacityUnits: 2
+
+
+
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./functions/authorizer
+      FunctionName: 
+        Fn::Sub: ${AWS::StackName}-Authorizer
+      Environment:
+        Variables:
+          ENV:
+            Ref: Environment
+          KEYS_TABLE:
+            Ref: ApiKeysTable
+      Policies:
+        - AWSLambdaExecute
+        - AWSXRayDaemonWriteAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:Gettem"
+              Resource:
+                Fn::GetAtt: ApiKeysTable.Arn
+Outputs:
+  ProdDataEndpoint:
+    Description: "API Prod stage endpoint"
+    Value:
+      Fn::Sub: "https://${SampleApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/"
+  CognitoUserPoolID:
+    Value: !Ref CognitoUserPool
+    Description: The UserPool ID
+    Export:
+      Name: 
+        Fn::Join: ["-", [Ref: AWS::StackName, "CognitoUserPoolID"]]
+  CognitoAppClientID:
+    Value: !Ref UserPoolClient
+    Description: The app client
+    Export:
+      Name: 
+        Fn::Join: ["-", [Ref: AWS::StackName, "CognitoAppClientID"]]
+  HostedUIURL:
+    Value: !Sub https://${AWS::StackName}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${UserPoolClient}&response_type=code&scope=email+openid+phone+profile&redirect_uri=http://localhost:3000
+    Description: The hosted UI URL
+    Export:
+      Name: 
+        Fn::Join: ["-", [Ref: AWS::StackName, "HostedUIURL"]]
